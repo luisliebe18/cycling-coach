@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cycling Performance Center</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <div class="brand">🚴 <b>CPC</b> <span>Personal Cycling Performance Center</span></div>
+    <nav id="nav"></nav>
+    <div class="topbar-right">
+      <button id="themeBtn" class="btn ghost" title="Farbschema wechseln">◐</button>
+      <button id="logoutBtn" class="btn ghost hidden">Abmelden</button>
+    </div>
+  </header>
+
+  <main id="view"><div class="loading">Lädt…</div></main>
+
+  <div id="loginScreen" class="login-screen hidden">
+    <div class="login-card card">
+      <h1 id="loginTitle">Anmeldung</h1>
+      <p class="muted" id="loginHint"></p>
+      <form id="loginForm">
+        <label>Benutzername <input id="lUser" autocomplete="username" required maxlength="64"></label>
+        <label>Passwort <input id="lPass" type="password" autocomplete="current-password" required maxlength="256"></label>
+        <button class="btn primary" type="submit">Anmelden / Konto anlegen</button>
+        <div id="loginError" class="error hidden"></div>
+      </form>
+      <p class="muted small">Single-User-Plattform. Beim ersten Aufruf wird dein privates Konto angelegt
+         (Passwort ≥ 8 Zeichen). Zugangsdaten stehen nie im Quellcode.</p>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/api.js"></script>
+<script src="/static/js/charts.js"></script>
+<script src="/static/js/views.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>
