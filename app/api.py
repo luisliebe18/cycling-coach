@@ -239,7 +239,7 @@ def dashboard(_: str = Depends(require_auth), con: sqlite3.Connection = Depends(
             'hours': round((r['time_s'] or 0) / 3600, 1),
             'elev_m': round(r['elev']), 'avg_power': round(r['avg_p'], 1) if r['avg_p'] else None,
             'work_kj': round(r['work']) if r['work'] else None,
-            'tss': round(r['tss'], 0)}
+            'tss': round(r['tss'] or 0, 0)}
     ftp, ftp_src = services.current_ftp(con)
     wt, _ = services.current_weight(con)
     out['ftp'] = {'w': ftp, 'source': ftp_src, 'wkg': calc.wkg(ftp, wt)}
@@ -294,13 +294,13 @@ def list_activities(from_: str | None = None, to: str | None = None,
     if type:
         q.append("AND activity_type=?"); args.append(type)
     if power == 'yes':
-        q.append("AND power_data=1")
+        q.append("AND power_data=1"); args.append(1)
     elif power == 'no':
-        q.append("AND power_data=0")
+        q.append("AND power_data=0"); args.append(0)
     if indoor == 'yes':
-        q.append("AND indoor=1")
+        q.append("AND indoor=?"); args.append(1)
     elif indoor == 'no':
-        q.append("AND indoor=0")
+        q.append("AND indoor=?"); args.append(0)
     if min_km is not None:
         q.append("AND distance_m/1000.0>=?"); args.append(min_km)
     if max_km is not None:
@@ -615,17 +615,30 @@ MAX_UPLOAD_BYTES = config.MAX_FILE_BYTES
 
 
 @router.post('/import')
-async def import_files(files: list[UploadFile] = File(...),
-                       _: str = Depends(require_auth),
-                       con: sqlite3.Connection = Depends(get_db)):
+def import_files(files: list[UploadFile] = File(...),
+                 _: str = Depends(require_auth),
+                 con: sqlite3.Connection = Depends(get_db)):
     report = []
     for f in files:
         name = (f.filename or 'upload').split('/')[-1]
-        data = await f.read(MAX_UPLOAD_BYTES + 1)
-        if len(data) > MAX_UPLOAD_BYTES:
+        # Upload streamingartig in Häppchen lesen, Grenze früh erkennen
+        chunks = []
+        total = 0
+        too_big = False
+        while True:
+            chunk = f.file.read(1024 * 1024)
+            if not chunk:
+                break
+            total += len(chunk)
+            if total > MAX_UPLOAD_BYTES:
+                too_big = True
+                break
+            chunks.append(chunk)
+        if too_big:
             report.append({'filename': name, 'status': 'error',
                            'message': f'Datei überschreitet {MAX_UPLOAD_BYTES // 1048576} MB Limit'})
             continue
+        data = b''.join(chunks)
         try:
             results = services.import_upload(con, name, data)
         except Exception as e:
