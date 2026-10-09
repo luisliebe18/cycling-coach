@@ -1,1 +1,6 @@
-(empty)
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Local database files
+data/cycling.db
